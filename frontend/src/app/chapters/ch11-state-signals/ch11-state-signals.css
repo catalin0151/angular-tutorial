@@ -1,0 +1,29 @@
+.chapter { max-width: 900px; }
+.tag { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #2563eb; margin: 0 0 0.25rem; }
+h1 { margin: 0 0 0.75rem; font-size: 2rem; color: #0f172a; }
+.lede { color: #475569; margin: 0 0 2rem; line-height: 1.5; }
+.lede code { background: #e2e8f0; padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.9em; }
+
+.layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem; }
+.card h2 { margin: 0 0 0.75rem; font-size: 1.1rem; }
+
+.catalog, .cart { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.catalog li { display: grid; grid-template-columns: 1fr auto auto; gap: 0.75rem; align-items: center; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 8px; }
+.catalog .name { font-weight: 600; color: #0f172a; }
+.catalog .price { color: #64748b; font-variant-numeric: tabular-nums; }
+.catalog button { padding: 0.3rem 0.75rem; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+
+.cart li { display: grid; grid-template-columns: 1fr auto auto auto; gap: 0.75rem; align-items: center; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 8px; }
+.cart .name { font-weight: 500; }
+.cart .qty { display: flex; gap: 0.3rem; align-items: center; }
+.cart .qty button { padding: 0.1rem 0.5rem; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; }
+.cart .qty strong { min-width: 1.5rem; text-align: center; font-variant-numeric: tabular-nums; }
+.cart .price { color: #64748b; font-variant-numeric: tabular-nums; min-width: 5rem; text-align: right; }
+.cart .rm { padding: 0.1rem 0.5rem; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; border-radius: 4px; cursor: pointer; }
+
+.totals { display: flex; justify-content: space-between; padding: 0.75rem; margin-top: 0.75rem; border-top: 1px solid #e2e8f0; font-size: 1.1rem; }
+.clear { margin-top: 0.75rem; padding: 0.4rem 0.9rem; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; }
+
+.hint { color: #64748b; font-size: 0.9rem; margin: 0.75rem 0; }
+.hint.small { font-size: 0.8rem; }

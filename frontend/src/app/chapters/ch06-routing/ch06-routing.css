@@ -1,0 +1,18 @@
+.chapter { max-width: 760px; }
+.tag { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #2563eb; margin: 0 0 0.25rem; }
+h1 { margin: 0 0 0.75rem; font-size: 2rem; color: #0f172a; }
+.lede { color: #475569; margin: 0 0 2rem; line-height: 1.5; }
+.lede code { background: #e2e8f0; padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.9em; }
+
+.tabs {
+  display: flex; gap: 0.5rem; flex-wrap: wrap;
+  padding: 0.75rem; background: #f1f5f9; border-radius: 10px;
+  margin-bottom: 1rem;
+}
+.tabs a, .tabs button {
+  padding: 0.4rem 0.9rem; border-radius: 6px;
+  background: #fff; border: 1px solid #cbd5e1; color: #334155;
+  text-decoration: none; cursor: pointer; font-size: 0.9rem;
+}
+.tabs a.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+.tabs button { background: #0f172a; color: #fff; border-color: #0f172a; margin-left: auto; }

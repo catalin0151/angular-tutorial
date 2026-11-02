@@ -1,0 +1,12 @@
+.chapter { max-width: 760px; }
+.tag { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #2563eb; margin: 0 0 0.25rem; }
+h1 { margin: 0 0 0.75rem; font-size: 2rem; color: #0f172a; }
+.lede { color: #475569; margin: 0 0 2rem; line-height: 1.5; }
+.lede code { background: #e2e8f0; padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.9em; }
+
+.card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+.card h2 { margin: 0 0 0.75rem; font-size: 1.1rem; }
+.card input { padding: 0.5rem 0.7rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; width: 100%; }
+.card ul { padding-left: 1.25rem; margin: 0.5rem 0; }
+.card li { font-size: 0.9rem; color: #334155; }
+.hint { color: #64748b; font-size: 0.85rem; margin: 0.5rem 0; }

@@ -17,10 +17,18 @@
         (input)="name.set($any($event.target).value)"
         placeholder="type your name"
       />
+      <small>{{nameCharNumber()}} characters</small>
     </label>
+    <select [value]="greetingStyle()" (input)="greetingStyle.set($any($event.target).value)">
+      <option value="casual">Casual</option>
+      <option value="formal">Formal</option>
+    </select>
 
     <p class="output">{{ greeting() }}</p>
-
-    <button type="button" (click)="clear()">Clear</button>
+    @if (name()) {
+      <button type="button" (click)="clear()">Clear</button>
+    } @else {
+      <button type="button" (click)="reset()">Reset</button>
+    }
   </div>
 </section>

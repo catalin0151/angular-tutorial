@@ -1,0 +1,42 @@
+<section class="chapter">
+  <header>
+    <p class="tag">Chapter 09</p>
+    <h1>HttpClient & backend</h1>
+    <p class="lede">
+      <code>HttpClient</code>, interceptors, a typed service that wraps API
+      calls. We use a mock in-memory backend so no server is required yet.
+    </p>
+  </header>
+
+  <div class="card">
+    <div class="controls">
+      <button type="button" (click)="prev()" [disabled]="page() === 1">←</button>
+      <span>Page {{ page() }} — {{ total() }} total</span>
+      <button type="button" (click)="next()" [disabled]="page() * size >= total()">→</button>
+      <button type="button" class="add" (click)="addRandom()">+ random</button>
+    </div>
+
+    @if (loading()) { <p class="hint">Loading…</p> }
+    @if (error(); as e) { <p class="err">{{ e }}</p> }
+
+    <table>
+      <thead>
+        <tr><th>ID</th><th>Date</th><th>Account</th><th>Counterparty</th><th>Amount</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        @for (tx of items(); track tx.id) {
+          <tr>
+            <td>{{ tx.id }}</td>
+            <td>{{ tx.date | date:'yyyy-MM-dd' }}</td>
+            <td>{{ tx.account }}</td>
+            <td>{{ tx.counterparty }}</td>
+            <td [class.negative]="tx.amount < 0">{{ tx.amount | number:'1.2-2' }} {{ tx.currency }}</td>
+            <td>{{ tx.status }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="6" class="empty">No rows.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

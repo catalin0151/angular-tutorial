@@ -1,0 +1,83 @@
+<section class="chapter">
+  <header>
+    <p class="tag">Chapter 03</p>
+    <h1>Binding & signals</h1>
+    <p class="lede">
+      Deeper on <code>signal</code>, <code>computed</code>, and
+      <code>effect</code>. All of the new control flow:
+      <code>&#64;if</code>, <code>&#64;for</code>, <code>&#64;switch</code>,
+      <code>&#64;defer</code>, <code>&#64;let</code>.
+    </p>
+  </header>
+
+  <!-- Counter demo -->
+  <div class="card">
+    <h2>Counter — signal + computed</h2>
+    <p class="row">
+      <button type="button" (click)="decrement()">−</button>
+      <strong class="count">{{ count() }}</strong>
+      <button type="button" (click)="increment()">+</button>
+      <button type="button" (click)="reset()">Reset</button>
+    </p>
+    <p class="hint">Doubled: {{ doubled() }} (recomputed only when <code>count</code> changes)</p>
+    <p class="hint">Open DevTools → Console to see the <code>effect()</code> fire.</p>
+  </div>
+
+  <!-- Filter demo -->
+  <div class="card">
+    <h2>Filterable transactions — @for + @empty + @switch</h2>
+
+    <div class="controls">
+      <label>
+        Search account
+        <input
+          type="text"
+          [value]="search()"
+          (input)="onSearchInput($event)"
+          placeholder="e.g. ACC-001"
+        />
+      </label>
+      <label>
+        Status
+        <select [value]="statusFilter()" (change)="onStatusChange($event)">
+          <option value="all">All</option>
+          <option value="pending">Pending</option>
+          <option value="cleared">Cleared</option>
+          <option value="failed">Failed</option>
+        </select>
+      </label>
+    </div>
+
+    @let count = filtered().length;
+    <p class="hint">Showing <strong>{{ count }}</strong> of {{ transactions().length }} — total {{ total() | number:'1.2-2' }}</p>
+
+    <ul class="list">
+      @for (tx of filtered(); track tx.id; let i = $index) {
+        <li>
+          <span class="idx">{{ i + 1 }}.</span>
+          <span class="acct">{{ tx.account }}</span>
+          <span class="amt" [class.negative]="tx.amount < 0">{{ tx.amount | number:'1.2-2' }}</span>
+          @switch (tx.status) {
+            @case ('cleared') { <span class="badge badge-ok">Cleared</span> }
+            @case ('pending') { <span class="badge badge-pending">Pending</span> }
+            @case ('failed')  { <span class="badge badge-fail">Failed</span> }
+          }
+        </li>
+      } @empty {
+        <li class="empty">No transactions match these filters.</li>
+      }
+    </ul>
+  </div>
+
+  <!-- @defer demo -->
+  <div class="card">
+    <h2>@defer — load heavy stuff lazily</h2>
+    @defer (on viewport) {
+      <p class="deferred">👋 I'm loaded only when you scroll me into view.</p>
+    } @placeholder {
+      <p class="hint">(placeholder shown until @defer triggers)</p>
+    } @loading (minimum 300ms) {
+      <p class="hint">loading…</p>
+    }
+  </div>
+</section>

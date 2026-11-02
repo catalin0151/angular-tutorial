@@ -1,0 +1,36 @@
+<section class="chapter">
+  <header>
+    <p class="tag">Chapter 05</p>
+    <h1>Services & DI</h1>
+    <p class="lede">
+      Shared state and shared behavior live in services. <code>inject()</code>
+      is how components (and other services) get hold of them. One singleton
+      per app with <code>providedIn: 'root'</code>.
+    </p>
+  </header>
+
+  <div class="card">
+    <h2>Log something</h2>
+    <div class="row">
+      <button type="button" class="info"  (click)="fireInfo()">info</button>
+      <button type="button" class="warn"  (click)="fireWarn()">warn</button>
+      <button type="button" class="error" (click)="fireError()">error</button>
+      <button type="button" (click)="logger.clear()">clear</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Log entries ({{ logger.entries().length }})</h2>
+    <ul class="log">
+      @for (entry of logger.entries(); track entry.at) {
+        <li [class]="'line line-' + entry.level">
+          <span class="when">{{ entry.at | date:'HH:mm:ss' }}</span>
+          <span class="level">{{ entry.level }}</span>
+          <span class="msg">{{ entry.message }}</span>
+        </li>
+      } @empty {
+        <li class="empty">No logs yet.</li>
+      }
+    </ul>
+  </div>
+</section>

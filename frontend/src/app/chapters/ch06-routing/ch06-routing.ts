@@ -1,9 +1,17 @@
-import { Component } from '@angular/core';
-import { ComingSoon } from '../../shared/coming-soon/coming-soon';
+import { Component, inject } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet, ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-ch06-routing',
-  imports: [ComingSoon],
-  template: `<app-coming-soon num="06" title="Routing" />`,
+  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  templateUrl: './ch06-routing.html',
+  styleUrl: './ch06-routing.css',
 })
-export class Ch06Routing {}
+export class Ch06Routing {
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
+  goProgrammatic() {
+    this.router.navigate(['./accounts', 'ACC-042'], { relativeTo: this.route });
+  }
+}

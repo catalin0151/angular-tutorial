@@ -1,0 +1,29 @@
+.chapter { max-width: 720px; }
+
+.tag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #2563eb;
+  margin: 0 0 0.25rem;
+}
+
+h1 { margin: 0 0 0.75rem; font-size: 2rem; color: #0f172a; }
+
+.lede { color: #475569; margin: 0 0 2rem; line-height: 1.5; }
+.lede code {
+  background: #e2e8f0;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.status {
+  margin-top: 1.5rem;
+  padding: 0.75rem 1rem;
+  background: #ecfeff;
+  border: 1px solid #a5f3fc;
+  border-radius: 8px;
+  color: #0e7490;
+}

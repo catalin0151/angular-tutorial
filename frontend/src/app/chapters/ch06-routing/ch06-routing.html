@@ -1,0 +1,20 @@
+<section class="chapter">
+  <header>
+    <p class="tag">Chapter 06</p>
+    <h1>Routing</h1>
+    <p class="lede">
+      Child routes, lazy loading, route params. Navigate with
+      <code>[routerLink]</code> or <code>router.navigate()</code>.
+    </p>
+  </header>
+
+  <nav class="tabs">
+    <a routerLink="./" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="active">Overview</a>
+    <a routerLink="./accounts" routerLinkActive="active">Accounts</a>
+    <a routerLink="./accounts/ACC-001" routerLinkActive="active">ACC-001</a>
+    <a routerLink="./accounts/ACC-002" routerLinkActive="active">ACC-002</a>
+    <button type="button" (click)="goProgrammatic()">Go to ACC-042 (programmatic)</button>
+  </nav>
+
+  <router-outlet />
+</section>

@@ -41,16 +41,16 @@ Open http://localhost:4200 → the sidebar lists every chapter. Click one to loa
 | #  | Chapter                      | Status  |
 |----|------------------------------|---------|
 | 01 | Hello Angular                | done    |
-| 02 | Components & templates       | pending |
-| 03 | Binding & signals            | pending |
-| 04 | Directives & pipes           | pending |
-| 05 | Services & DI                | pending |
-| 06 | Routing                      | pending |
-| 07 | Template-driven forms        | pending |
-| 08 | Reactive forms               | pending |
-| 09 | HttpClient & backend         | pending |
-| 10 | RxJS basics                  | pending |
-| 11 | State with signals           | pending |
+| 02 | Components & templates       | done    |
+| 03 | Binding & signals            | done    |
+| 04 | Directives & pipes           | done    |
+| 05 | Services & DI                | done    |
+| 06 | Routing                      | done    |
+| 07 | Template-driven forms        | done    |
+| 08 | Reactive forms               | done    |
+| 09 | HttpClient & backend         | done (mock) |
+| 10 | RxJS basics                  | done    |
+| 11 | State with signals           | done    |
 | 12 | UI with Tailwind             | pending |
 | 13 | Data grid                    | pending |
 | 14 | Dynamic reports              | pending |

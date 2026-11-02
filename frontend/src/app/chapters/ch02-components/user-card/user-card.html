@@ -1,0 +1,9 @@
+<article class="card" (click)="sayHi()">
+  <h3>{{ name() }}</h3>
+  <p class="role">{{ role() }}</p>
+  @if(avatarUrl()) {
+  <img [src]="avatarUrl()"/>
+  }
+
+  <button type="button" (click)="sayHi(); $event.stopPropagation()">Greet</button>
+</article>

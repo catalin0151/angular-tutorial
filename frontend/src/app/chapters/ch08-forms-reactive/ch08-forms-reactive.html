@@ -1,0 +1,71 @@
+<section class="chapter">
+  <header>
+    <p class="tag">Chapter 08</p>
+    <h1>Reactive forms</h1>
+    <p class="lede">
+      The form API you'll use every day on the DB app. Explicit, typed,
+      composable, testable without the DOM. <code>FormGroup</code>,
+      <code>FormControl</code>, <code>FormArray</code>, custom validators,
+      cross-field validation.
+    </p>
+  </header>
+
+  <form class="card" [formGroup]="form" (ngSubmit)="submit()">
+    <label>
+      Name
+      <input type="text" formControlName="name" />
+      @if (form.controls.name.touched && form.controls.name.errors; as e) {
+        <small class="err">
+          @if (e['required']) { Name is required. }
+          @if (e['minlength']) { Min 2 characters. }
+        </small>
+      }
+    </label>
+
+    <label>
+      Email
+      <input type="email" formControlName="email" />
+      @if (form.controls.email.touched && form.controls.email.invalid) {
+        <small class="err">Please enter a valid email.</small>
+      }
+    </label>
+
+    <label>
+      Password
+      <input type="password" formControlName="password" />
+      @if (form.controls.password.touched && form.controls.password.errors?.['minlength']) {
+        <small class="err">At least 8 characters.</small>
+      }
+    </label>
+
+    <label>
+      Confirm password
+      <input type="password" formControlName="confirm" />
+      @if (form.touched && form.errors?.['passwordsMismatch']) {
+        <small class="err">Passwords don't match.</small>
+      }
+    </label>
+
+    <fieldset formArrayName="tags">
+      <legend>Tags</legend>
+      @for (ctrl of tags.controls; track $index) {
+        <div class="row">
+          <input type="text" [formControlName]="$index" placeholder="tag" />
+          <button type="button" (click)="removeTag($index)">×</button>
+        </div>
+      } @empty {
+        <p class="hint">No tags yet.</p>
+      }
+      <button type="button" class="add" (click)="addTag()">+ add tag</button>
+    </fieldset>
+
+    <div class="actions">
+      <button type="submit" [disabled]="form.invalid">Submit</button>
+      <small [class.ok]="form.valid" [class.bad]="form.invalid">
+        {{ form.valid ? 'valid' : 'invalid' }}
+      </small>
+    </div>
+  </form>
+
+  <pre class="debug">{{ form.getRawValue() | json }}</pre>
+</section>

@@ -1,0 +1,40 @@
+<section class="chapter">
+  <header>
+    <p class="tag">Chapter 10</p>
+    <h1>RxJS basics</h1>
+    <p class="lede">
+      Just enough RxJS to be effective: <code>Observable</code>,
+      <code>map</code>/<code>filter</code>, <code>switchMap</code>,
+      <code>debounceTime</code>, and signal interop via
+      <code>toSignal</code> / <code>toObservable</code>.
+    </p>
+  </header>
+
+  <div class="card">
+    <h2>Signal from an interval</h2>
+    <p>Tick: <strong>{{ tick() }}</strong></p>
+    <p class="hint">Check the console — a separate 2s log is firing too.</p>
+  </div>
+
+  <div class="card">
+    <h2>Debounced search with switchMap</h2>
+    <input
+      type="text"
+      [value]="search()"
+      (input)="onSearch($event)"
+      placeholder="type to trigger a mock search"
+    />
+    <p class="hint">(This chapter's search uses the ch09 mock backend. We debounce input 300ms and cancel in-flight requests via switchMap.)</p>
+
+    @if (results(); as res) {
+      <p>Loaded <strong>{{ res.items.length }}</strong> of {{ res.total }} rows.</p>
+      <ul>
+        @for (tx of res.items; track tx.id) {
+          <li>#{{ tx.id }} · {{ tx.account }} · {{ tx.amount | number:'1.2-2' }}</li>
+        }
+      </ul>
+    } @else {
+      <p class="hint">Loading or no results yet…</p>
+    }
+  </div>
+</section>

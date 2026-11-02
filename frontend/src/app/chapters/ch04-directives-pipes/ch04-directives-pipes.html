@@ -1,0 +1,57 @@
+<section class="chapter">
+  <header>
+    <p class="tag">Chapter 04</p>
+    <h1>Directives & pipes</h1>
+    <p class="lede">
+      Built-in pipes for formatting, a custom pipe, and a custom
+      attribute directive. Plus the <code>[class.x]</code> and
+      <code>[style.prop]</code> shorthands you'll use every day.
+    </p>
+  </header>
+
+  <div class="card">
+    <h2>Built-in pipes</h2>
+    <ul class="pipes">
+      <li><code>currency</code> → {{ price | currency:'EUR' }}</li>
+      <li><code>number:'1.2-2'</code> → {{ price | number:'1.2-2' }}</li>
+      <li><code>percent</code> → {{ rate | percent:'1.0-2' }}</li>
+      <li><code>date:'short'</code> → {{ now | date:'short' }}</li>
+      <li><code>date:'yyyy-MM-dd HH:mm'</code> → {{ now | date:'yyyy-MM-dd HH:mm' }}</li>
+      <li><code>titlecase</code> → {{ 'hello world from angular' | titlecase }}</li>
+      <li><code>slice:0:20</code> → {{ longText() | slice:0:20 }}…</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Custom pipe — <code>truncate</code></h2>
+    <p>{{ longText() | truncate:30 }}</p>
+    <p>{{ longText() | truncate:50:' […]' }}</p>
+  </div>
+
+  <div class="card">
+    <h2>Custom directive — <code>appHighlight</code></h2>
+    <p appHighlight>Hover me (default yellow)</p>
+    <p [appHighlight]="'#bfdbfe'">Hover me (custom blue)</p>
+  </div>
+
+  <div class="card">
+    <h2>Class and style bindings</h2>
+    <div
+      class="box"
+      [class.active]="isActive()"
+      [class.inactive]="!isActive()"
+      [style.font-size.px]="fontSize()"
+    >
+      I'm {{ isActive() ? 'active' : 'inactive' }} at {{ fontSize() }}px
+    </div>
+    <div class="row">
+      <button type="button" (click)="toggle()">Toggle</button>
+      <button type="button" (click)="shrink()">A−</button>
+      <button type="button" (click)="bump()">A+</button>
+    </div>
+    <p class="hint">
+      <code>[class.active]="isActive()"</code> toggles a class.
+      <code>[style.font-size.px]</code> binds a style with a unit suffix.
+    </p>
+  </div>
+</section>

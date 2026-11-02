@@ -1,0 +1,29 @@
+<section class="chapter">
+  <header>
+    <p class="tag">Chapter 02</p>
+    <h1>Components & templates</h1>
+    <p class="lede">
+      Three new ideas: child components with <code>input()</code>,
+      child-to-parent events with <code>output()</code>, and content projection
+      with <code>&lt;ng-content&gt;</code>.
+    </p>
+  </header>
+
+  <app-panel>
+    <h2 slot="header">Team</h2>
+    <app-add-user (submit)="onAddNewUser($event)"></app-add-user>
+    <p>Click a card to greet a user.</p>
+    @for (user of users(); track user.id) {
+      <app-user-card
+        [name]="user.name"
+        [role]="user.role"
+        (greet)="onGreet($event)"
+        [avatarUrl]="`https://picsum.photos/400/200?t=${user.id}`"
+      />
+    }
+  </app-panel>
+
+  @if (lastGreeted(); as who) {
+    <p class="status">Last greeted: <strong>{{ who }}</strong></p>
+  }
+</section>

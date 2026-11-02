@@ -1,0 +1,60 @@
+<section class="chapter">
+  <header>
+    <p class="tag">Chapter 11</p>
+    <h1>State with signals</h1>
+    <p class="lede">
+      A signal-based store: private writable signals, public readonly views,
+      derived computeds, and a persist-to-localStorage effect. Replaces the
+      role Redux/Vuex played in older apps.
+    </p>
+  </header>
+
+  <div class="layout">
+    <div class="card">
+      <h2>Catalog</h2>
+      <ul class="catalog">
+        @for (p of products; track p.id) {
+          <li>
+            <span class="name">{{ p.name }}</span>
+            <span class="price">{{ p.price | currency:'EUR' }}</span>
+            <button type="button" (click)="cart.add(p)">Add</button>
+          </li>
+        }
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Cart ({{ cart.count() }})</h2>
+
+      @if (cart.isEmpty()) {
+        <p class="hint">Cart is empty.</p>
+      } @else {
+        <ul class="cart">
+          @for (item of cart.items(); track item.id) {
+            <li>
+              <span class="name">{{ item.name }}</span>
+              <span class="qty">
+                <button type="button" (click)="cart.decrement(item.id)">−</button>
+                <strong>{{ item.qty }}</strong>
+                <button type="button" (click)="cart.increment(item.id)">+</button>
+              </span>
+              <span class="price">{{ item.price * item.qty | currency:'EUR' }}</span>
+              <button type="button" class="rm" (click)="cart.remove(item.id)">×</button>
+            </li>
+          }
+        </ul>
+        <div class="totals">
+          <strong>Total:</strong>
+          <strong>{{ cart.total() | currency:'EUR' }}</strong>
+        </div>
+        <button type="button" class="clear" (click)="cart.clear()">Clear cart</button>
+      }
+    </div>
+  </div>
+
+  <p class="hint small">
+    State persists across page reload because an <code>effect()</code> syncs
+    <code>cart.items()</code> to <code>localStorage</code>. (For brevity we don't
+    re-hydrate it on load — that's Exercise 2.)
+  </p>
+</section>

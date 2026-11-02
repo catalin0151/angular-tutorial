@@ -1,0 +1,80 @@
+<section class="chapter">
+  <header>
+    <p class="tag">Chapter 07</p>
+    <h1>Template-driven forms</h1>
+    <p class="lede">
+      Angular's "simple" form API: <code>ngModel</code> wires an input to a
+      field, <code>#form="ngForm"</code> gives you the form state. Great for
+      small forms. Covered in contrast to Reactive Forms (ch08).
+    </p>
+  </header>
+
+  <form class="card" #f="ngForm" (ngSubmit)="submit()">
+    <label>
+      Name
+      <input
+        type="text"
+        name="name"
+        [ngModel]="form().name"
+        (ngModelChange)="patch('name', $event)"
+        required
+        minlength="2"
+        #nameCtrl="ngModel"
+      />
+      @if (nameCtrl.touched && nameCtrl.invalid) {
+        <small class="err">
+          @if (nameCtrl.errors?.['required']) { Name is required. }
+          @if (nameCtrl.errors?.['minlength']) { Min 2 chars. }
+        </small>
+      }
+    </label>
+
+    <label>
+      Email
+      <input
+        type="email"
+        name="email"
+        [ngModel]="form().email"
+        (ngModelChange)="patch('email', $event)"
+        required
+        email
+        #emailCtrl="ngModel"
+      />
+      @if (emailCtrl.touched && emailCtrl.invalid) {
+        <small class="err">Please enter a valid email.</small>
+      }
+    </label>
+
+    <label>
+      Role
+      <select
+        name="role"
+        [ngModel]="form().role"
+        (ngModelChange)="patch('role', $event)"
+      >
+        <option value="trader">Trader</option>
+        <option value="analyst">Analyst</option>
+        <option value="ops">Ops</option>
+      </select>
+    </label>
+
+    <label class="inline">
+      <input
+        type="checkbox"
+        name="subscribe"
+        [ngModel]="form().subscribe"
+        (ngModelChange)="patch('subscribe', $event)"
+      />
+      Subscribe to updates
+    </label>
+
+    <div class="actions">
+      <button type="submit" [disabled]="f.invalid">Submit</button>
+      <small [class.ok]="f.valid" [class.bad]="f.invalid">
+        Form is {{ f.valid ? 'valid' : 'invalid' }}
+      </small>
+    </div>
+  </form>
+
+  <pre class="debug">{{ form() | json }}</pre>
+</section>

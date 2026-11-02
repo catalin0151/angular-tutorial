@@ -8,6 +8,14 @@ export const routes: Routes = [
     loadComponent: () => import('./chapters/ch01-hello/ch01-hello').then(m => m.Ch01Hello),
   },
   {
+    path: 'ch01-hello-clean',
+    loadComponent: () => import('./chapters/ch01-hello-clean/ch01-hello-clean').then(m => m.Ch01HelloClean),
+  },
+  {
+    path: 'ch02-components-clean',
+    loadComponent: () => import('./chapters/ch02-components-clean/ch02-components-clean').then(m => m.Ch02ComponentsClean),
+  },
+  {
     path: 'ch02-components',
     loadComponent: () => import('./chapters/ch02-components/ch02-components').then(m => m.Ch02Components),
   },
@@ -26,6 +34,7 @@ export const routes: Routes = [
   {
     path: 'ch06-routing',
     loadComponent: () => import('./chapters/ch06-routing/ch06-routing').then(m => m.Ch06Routing),
+    loadChildren: () => import('./chapters/ch06-routing/ch06.routes').then(m => m.ch06Routes),
   },
   {
     path: 'ch07-forms-template',

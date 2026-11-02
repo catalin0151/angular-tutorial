@@ -16,7 +16,9 @@ interface ChapterLink {
 export class App {
   readonly chapters: ChapterLink[] = [
     { num: '01', path: '/ch01-hello',          title: 'Hello Angular' },
+    { num: '01*', path: '/ch01-hello-clean',   title: 'Hello Angular (clean)' },
     { num: '02', path: '/ch02-components',     title: 'Components & templates' },
+    { num: '02*', path: '/ch02-components-clean', title: 'Components (clean)' },
     { num: '03', path: '/ch03-binding-signals', title: 'Binding & signals' },
     { num: '04', path: '/ch04-directives-pipes', title: 'Directives & pipes' },
     { num: '05', path: '/ch05-services-di',    title: 'Services & DI' },

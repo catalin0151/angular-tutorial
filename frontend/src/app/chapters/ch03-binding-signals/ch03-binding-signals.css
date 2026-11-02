@@ -1,0 +1,82 @@
+.chapter { max-width: 760px; }
+
+.tag {
+  font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.08em; color: #2563eb; margin: 0 0 0.25rem;
+}
+h1 { margin: 0 0 0.75rem; font-size: 2rem; color: #0f172a; }
+.lede { color: #475569; margin: 0 0 2rem; line-height: 1.5; }
+.lede code, .hint code {
+  background: #e2e8f0; padding: 0.1rem 0.35rem;
+  border-radius: 4px; font-size: 0.9em;
+}
+
+.card {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+  padding: 1.5rem; margin-bottom: 1.5rem;
+}
+.card h2 {
+  margin: 0 0 1rem; font-size: 1.1rem; color: #0f172a;
+}
+
+.row {
+  display: flex; align-items: center; gap: 0.75rem;
+  margin: 0 0 0.5rem;
+}
+.row button {
+  padding: 0.4rem 0.9rem; border-radius: 6px; border: 1px solid #cbd5e1;
+  background: #f8fafc; cursor: pointer; font-size: 0.9rem;
+}
+.row button:hover { background: #e2e8f0; }
+.count {
+  min-width: 2rem; text-align: center; font-variant-numeric: tabular-nums;
+  font-size: 1.25rem;
+}
+
+.hint { color: #475569; margin: 0.25rem 0; font-size: 0.85rem; }
+
+.controls {
+  display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;
+}
+.controls label {
+  display: flex; flex-direction: column; gap: 0.3rem;
+  font-size: 0.85rem; color: #334155;
+}
+.controls input, .controls select {
+  padding: 0.45rem 0.6rem; border: 1px solid #cbd5e1;
+  border-radius: 6px; font-size: 0.9rem;
+}
+
+.list { list-style: none; padding: 0; margin: 0.5rem 0 0; }
+.list li {
+  display: grid;
+  grid-template-columns: 2rem 1fr auto auto;
+  gap: 0.75rem; align-items: center;
+  padding: 0.5rem 0.25rem;
+  border-top: 1px solid #e2e8f0;
+}
+.list li:last-child { border-bottom: 1px solid #e2e8f0; }
+.list .idx { color: #94a3b8; font-variant-numeric: tabular-nums; }
+.list .acct { font-weight: 600; color: #0f172a; }
+.list .amt {
+  font-variant-numeric: tabular-nums; text-align: right;
+}
+.list .amt.negative { color: #dc2626; }
+.list .empty {
+  grid-template-columns: 1fr; color: #64748b; font-style: italic;
+  justify-items: center;
+}
+
+.badge {
+  padding: 0.1rem 0.5rem; border-radius: 999px;
+  font-size: 0.7rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.badge-ok      { background: #dcfce7; color: #15803d; }
+.badge-pending { background: #fef9c3; color: #a16207; }
+.badge-fail    { background: #fee2e2; color: #b91c1c; }
+
+.deferred {
+  padding: 1rem; background: #ecfeff; border: 1px solid #a5f3fc;
+  border-radius: 8px; color: #0e7490; margin: 0;
+}

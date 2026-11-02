@@ -1,9 +1,34 @@
-import { Component } from '@angular/core';
-import { ComingSoon } from '../../shared/coming-soon/coming-soon';
+import { Component, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { JsonPipe } from '@angular/common';
+
+interface Contact {
+  name: string;
+  email: string;
+  role: 'trader' | 'analyst' | 'ops';
+  subscribe: boolean;
+}
 
 @Component({
   selector: 'app-ch07-forms-template',
-  imports: [ComingSoon],
-  template: `<app-coming-soon num="07" title="Template-driven forms" />`,
+  imports: [FormsModule, JsonPipe],
+  templateUrl: './ch07-forms-template.html',
+  styleUrl: './ch07-forms-template.css',
 })
-export class Ch07FormsTemplate {}
+export class Ch07FormsTemplate {
+  readonly form = signal<Contact>({
+    name: '',
+    email: '',
+    role: 'trader',
+    subscribe: false,
+  });
+
+  submit() {
+    console.log('submitted', this.form());
+    alert('Submitted! Check the console.');
+  }
+
+  patch<K extends keyof Contact>(key: K, value: Contact[K]) {
+    this.form.update(c => ({ ...c, [key]: value }));
+  }
+}

@@ -1,0 +1,9 @@
+<div>
+    <label>
+        Username
+        <input type="text" placeholder="New user name" [value]="name()" (input)="onNameChange($event)">
+    </label>
+    <div>
+        <button type="button" (click)="onAddNewUser()">Add new user</button>
+    </div>
+</div>
