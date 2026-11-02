@@ -25,7 +25,7 @@
 
   <!-- Filter demo -->
   <div class="card">
-    <h2>Filterable transactions — @for + @empty + @switch</h2>
+    <h2>Filterable transactions — &#64;for + &#64;empty + &#64;switch</h2>
 
     <div class="controls">
       <label>
@@ -48,8 +48,8 @@
       </label>
     </div>
 
-    @let count = filtered().length;
-    <p class="hint">Showing <strong>{{ count }}</strong> of {{ transactions().length }} — total {{ total() | number:'1.2-2' }}</p>
+    @let shown = filtered().length;
+    <p class="hint">Showing <strong>{{ shown }}</strong> of {{ transactions().length }} — total {{ total() | number:'1.2-2' }}</p>
 
     <ul class="list">
       @for (tx of filtered(); track tx.id; let i = $index) {
@@ -71,11 +71,11 @@
 
   <!-- @defer demo -->
   <div class="card">
-    <h2>@defer — load heavy stuff lazily</h2>
+    <h2>&#64;defer — load heavy stuff lazily</h2>
     @defer (on viewport) {
       <p class="deferred">👋 I'm loaded only when you scroll me into view.</p>
     } @placeholder {
-      <p class="hint">(placeholder shown until @defer triggers)</p>
+      <p class="hint">(placeholder shown until &#64;defer triggers)</p>
     } @loading (minimum 300ms) {
       <p class="hint">loading…</p>
     }
