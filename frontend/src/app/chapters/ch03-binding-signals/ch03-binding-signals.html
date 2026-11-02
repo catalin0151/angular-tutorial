@@ -46,11 +46,20 @@
           <option value="failed">Failed</option>
         </select>
       </label>
+      <div>
+       <label>Min Amount:</label>
+       <input type="number" [value]="minAmount()" (input)="setMinAmount($event)">
+      </div>
+   
     </div>
 
     @let shown = filtered().length;
     <p class="hint">Showing <strong>{{ shown }}</strong> of {{ transactions().length }} — total {{ total() | number:'1.2-2' }}</p>
-
+    <div>
+      @for(statusItemKey of countByStatusKeys(); track statusItemKey; let i = $index) {
+        <span>{{statusItemKey}} : {{countByStatus()[statusItemKey]}}</span><br/>
+      }
+    </div>
     <ul class="list">
       @for (tx of filtered(); track tx.id; let i = $index) {
         <li>
@@ -78,6 +87,16 @@
       <p class="hint">(placeholder shown until &#64;defer triggers)</p>
     } @loading (minimum 300ms) {
       <p class="hint">loading…</p>
+    }
+  </div>
+  <div class="card">
+    <h2>Defer 2</h2>
+    @defer(on viewport) {
+      <p>Im loaded</p>
+    } @placeholder {
+      <p>placeholder</p>
+    } @loading {
+      <p>Loading..</p>
     }
   </div>
 </section>
