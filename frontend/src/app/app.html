@@ -1,0 +1,20 @@
+<div class="layout">
+  <aside class="sidebar">
+    <h1 class="brand">Angular Crash Course</h1>
+    <nav>
+      <ul>
+        @for (chapter of chapters; track chapter.path) {
+          <li>
+            <a [routerLink]="chapter.path" routerLinkActive="active">
+              <span class="num">{{ chapter.num }}</span>
+              <span class="title">{{ chapter.title }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+  </aside>
+  <main class="content">
+    <router-outlet />
+  </main>
+</div>

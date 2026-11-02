@@ -1,0 +1,26 @@
+<section class="chapter">
+  <header>
+    <p class="tag">Chapter 01</p>
+    <h1>Hello Angular</h1>
+    <p class="lede">
+      A component, a signal, a computed value, and an event handler. The whole
+      mental model of an Angular component is in this one file set.
+    </p>
+  </header>
+
+  <div class="demo">
+    <label>
+      Your name
+      <input
+        type="text"
+        [value]="name()"
+        (input)="name.set($any($event.target).value)"
+        placeholder="type your name"
+      />
+    </label>
+
+    <p class="output">{{ greeting() }}</p>
+
+    <button type="button" (click)="clear()">Clear</button>
+  </div>
+</section>
