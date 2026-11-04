@@ -30,19 +30,19 @@
 
   <div class="card">
     <h2>Custom directive — <code>appHighlight</code></h2>
-    <p appHighlight>Hover me (default yellow)</p>
+    <p appHighlight [always]="true">Hover me (default yellow)</p>
     <p [appHighlight]="'#bfdbfe'">Hover me (custom blue)</p>
   </div>
 
-  <div class="card">
-    <h2>Class and style bindings</h2>
+  <div class="card" appClickOutside (appOnClickOutside)="onClickOutside()">
+    <h2 [class]="scoreClass()">Class and style bindings</h2>
     <div
       class="box"
       [class.active]="isActive()"
       [class.inactive]="!isActive()"
       [style.font-size.px]="fontSize()"
     >
-      I'm {{ isActive() ? 'active' : 'inactive' }} at {{ fontSize() }}px
+      I'm {{ isActive() | yesno  }} at {{ fontSize() }}px
     </div>
     <div class="row">
       <button type="button" (click)="toggle()">Toggle</button>
@@ -53,5 +53,9 @@
       <code>[class.active]="isActive()"</code> toggles a class.
       <code>[style.font-size.px]</code> binds a style with a unit suffix.
     </p>
+    <div>
+      <input #searchInput type="text" placeholder="search" />
+      <button type="button" (click)="onFocusSearch()">Focus</button>
+    </div>
   </div>
 </section>

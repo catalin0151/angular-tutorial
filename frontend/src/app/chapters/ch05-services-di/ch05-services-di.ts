@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { LoggerService } from './logger.service';
+import { UserService } from './user.service';
 
 @Component({
   selector: 'app-ch05-services-di',
@@ -10,7 +11,8 @@ import { LoggerService } from './logger.service';
 })
 export class Ch05ServicesDi {
   readonly logger = inject(LoggerService);
-
+  readonly currentUser = inject(UserService);
+  
   fireInfo()  { this.logger.info('something happened'); }
   fireWarn()  { this.logger.warn('be careful'); }
   fireError() { this.logger.error('something broke'); }
