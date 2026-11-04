@@ -1,0 +1,50 @@
+// Prisma schema — the single source of truth for your database shape.
+// Edit this file, then run `npm run prisma:migrate` to generate a migration
+// and apply it. Prisma also regenerates the TS client automatically.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  user
+  admin
+}
+
+enum TxStatus {
+  pending
+  cleared
+  failed
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  role         Role     @default(user)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
+model Transaction {
+  id           Int      @id @default(autoincrement())
+  date         DateTime
+  account      String
+  counterparty String?
+  amount       Decimal  @db.Decimal(12, 2)
+  currency     String   @default("EUR") @db.VarChar(3)
+  status       TxStatus @default(pending)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([account])
+  @@index([status])
+  @@index([date])
+  @@map("transactions")
+}

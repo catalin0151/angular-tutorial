@@ -64,6 +64,67 @@ Angular reads them and populates `control.errors`.
 
 For anything beyond ~5 fields or anything dynamic, use Reactive Forms (ch08).
 
+### Control state flags
+
+Every control exposes four state flags you'll pair with validation errors:
+
+| Flag | Meaning |
+|---|---|
+| `touched` | user has blurred/left the field at least once |
+| `untouched` | opposite |
+| `dirty` | user has changed the value from its initial state |
+| `pristine` | opposite |
+| `valid` / `invalid` | validators pass/fail |
+| `pending` | an async validator is still running |
+
+**Standard UX rule:** show errors only after the user has interacted. Pair with `touched` (not `invalid` alone):
+
+```html
+@if (nameCtrl.touched && nameCtrl.invalid) {
+  <small class="err">...</small>
+}
+```
+
+Shows nothing on first load; shows errors as soon as the user blurs the field.
+
+### `ngModelOptions` — when to update the model
+
+By default `ngModel` fires on every keystroke. Override with `[ngModelOptions]`:
+
+```html
+<input [(ngModel)]="email" name="email" [ngModelOptions]="{ updateOn: 'blur' }" />
+```
+
+Options:
+- `'change'` — default. Fires on every input.
+- `'blur'` — fires when the field loses focus. Good for expensive validators or fields where keystroke-level validation feels noisy.
+- `'submit'` — fires only when the form is submitted. Rare but useful for wizards.
+
+### Reading the form from the class with `@ViewChild(NgForm)`
+
+Template refs are enough most of the time, but sometimes you need the form object in the class — to patch values, check validity before a save, reset after submit:
+
+```ts
+import { ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
+
+export class MyComponent {
+  @ViewChild('f') form!: NgForm;
+
+  reset() {
+    this.form.resetForm();        // resets values + touched/dirty flags
+  }
+
+  patch() {
+    this.form.form.patchValue({ name: 'Alice' });
+  }
+}
+```
+
+Template: `<form #f="ngForm" (ngSubmit)="submit(f)">`.
+
+Note the distinction: `this.form` is the `NgForm` directive instance; `this.form.form` is the underlying `FormGroup` (template-driven forms are reactive forms under the hood — just configured by the template).
+
 ---
 
 ## 2. Why files are named/structured this way
@@ -95,17 +156,43 @@ Angular's template-driven forms feel most like Vue 2 — both lean on `v-model`/
 
 ## 5. Exercises
 
-### Exercise 1 — pure two-way with `[(ngModel)]`
-Rewrite one input to use `[(ngModel)]="form().name"` directly. Observe that it won't work with the signal — because `[(ngModel)]="x"` requires a plain mutable field. Then add a plain field `nameField = ''` and use that. Discuss which style you prefer.
+### Exercise 1 — add a password field with show/hide toggle
 
-### Exercise 2 — add a password with min 8 chars
-Add a `password` field with `minlength="8"` and a show/hide button that toggles the input's `type` attribute between `password` and `text`.
+**Theory you need:** *`ngModel`*, *Built-in validators*.
 
-### Exercise 3 — custom reactive validation (preview of ch08)
-Add a `confirm password` field. Show an error when it doesn't match password. Hint: you'll need to read both control refs in the template.
+Add a `password` field with `minlength="8"` and `required`. Beside it, add a button that toggles the `<input>`'s `type` between `'password'` and `'text'` so the user can reveal what they typed.
 
-### Exercise 4 — stretch — reset on submit
-After a successful submit, reset the form to its initial state (hint: `signal.set(initialValue)` and `f.resetForm()`).
+- **Hint:** bind `[type]="showPwd() ? 'text' : 'password'"` and flip a `showPwd` signal on click.
+- **What good looks like:** typing 3 chars shows a min-length error (after blur); clicking the eye button reveals the characters.
+
+### Exercise 2 — validate on blur, not on every keystroke
+
+**Theory you need:** *`ngModelOptions`*.
+
+Currently every keystroke updates `form()` and re-runs validators. For the `email` field, change this to validate only when the user leaves the field (so no "invalid email" warning while they're mid-typing).
+
+- **Hint:** add `[ngModelOptions]="{ updateOn: 'blur' }"` to the email input.
+- **What good looks like:** type `a@b` → no error shown mid-typing → tab away → error appears if invalid.
+
+### Exercise 3 — match-password without ch08 helpers
+
+**Theory you need:** *Template references for form state*.
+
+Add a `confirmPassword` field. Show an error when it doesn't match `password`. Do it entirely in the template — no class logic.
+
+- **Hint:** `#pwCtrl="ngModel"` on the password input, `#confirmCtrl="ngModel"` on the confirm input, then `@if (confirmCtrl.touched && pwCtrl.value !== confirmCtrl.value) { ... }`.
+- **What good looks like:** mismatched passwords show an error under the second field after the user leaves it.
+- **Why this teaches contrast with ch08:** template-driven cross-field validation is awkward — you're comparing values in template logic instead of having one validator function. Reactive forms (ch08) fix this with group-level validators.
+
+### Exercise 4 — stretch — reset the form after submit via `@ViewChild(NgForm)`
+
+**Theory you need:** *Reading the form from the class with `@ViewChild(NgForm)`*.
+
+After a successful submit, clear all fields AND reset the `touched`/`dirty` flags so error messages disappear.
+
+- **Hint:** grab the form with `@ViewChild('f') form!: NgForm;` then call `this.form.resetForm()` after the alert. Also reset your `form` signal to the initial `Contact` shape.
+- **What good looks like:** submit → alert → all fields clear → no leftover error borders on required fields (because `touched` was reset too).
+- **Why `resetForm()` and not just `signal.set(initial)`:** setting the signal clears the values, but `touched`/`dirty` are owned by the `NgForm` directive — you have to reset both sides.
 
 ---
 
@@ -113,5 +200,8 @@ After a successful submit, reset the form to its initial state (hint: `signal.se
 
 - **Forgot the `name` attribute.** `ngModel` inside `<form>` silently fails to register without `name`.
 - **Forgot to import `FormsModule`.** Error: *"Can't bind to 'ngModel'."*
-- **`[(ngModel)]="aSignal()"`** — doesn't work. Two-way needs a plain settable property, not a signal call. Use the split syntax instead.
+- **`[(ngModel)]="aSignal()"`** — doesn't work. Two-way needs a plain settable property, not a signal call. Use the split syntax `[ngModel]="s()"` + `(ngModelChange)="s.set($event)"` instead.
 - **Validating on `invalid` alone.** Shows errors immediately on load. Pair with `.touched` or `.dirty` so the user sees errors only after interacting.
+- **Clearing a signal but not calling `resetForm()`.** The values clear but the form stays `touched`/`dirty`, so error borders and messages stick. Reset both sides.
+- **`required` on a `<select>` with an empty-string default option.** If the default `<option value="">—choose—</option>` matches your model's initial value, the form never becomes invalid. Set the model to `null` or use a non-empty sentinel.
+- **Template-driven form inside a modal or `@defer`.** Controls register when they mount. If the form is lazily rendered, don't read `f.valid` or `#ctrl` until it's actually in the DOM.

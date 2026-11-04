@@ -1,0 +1,55 @@
+.chapter { max-width: 1000px; }
+.tag { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #2563eb; margin: 0 0 0.25rem; }
+h1 { margin: 0 0 0.75rem; font-size: 2rem; color: #0f172a; }
+.lede { color: #475569; margin: 0 0 2rem; line-height: 1.5; }
+.lede code { background: #e2e8f0; padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.9em; }
+
+.card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem; }
+
+.controls { display: flex; gap: 0.75rem; margin-bottom: 1rem; }
+.controls input, .controls select {
+  padding: 0.45rem 0.7rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem;
+}
+.controls input { flex: 1; }
+
+.hint { color: #64748b; margin: 1rem 0; font-size: 0.9rem; }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+thead th {
+  text-align: left; padding: 0.5rem 0.6rem;
+  background: #f1f5f9; color: #334155;
+  font-weight: 600; font-size: 0.75rem;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  border-bottom: 1px solid #e2e8f0;
+  cursor: pointer; user-select: none;
+}
+thead th:hover { background: #e2e8f0; }
+thead th.active { color: #2563eb; }
+thead th.num { text-align: right; }
+.arrow { display: inline-block; width: 1em; text-align: center; color: #94a3b8; }
+thead th.active .arrow { color: #2563eb; }
+
+tbody td { padding: 0.5rem 0.6rem; border-bottom: 1px solid #f1f5f9; }
+tbody td.num { text-align: right; font-variant-numeric: tabular-nums; }
+tbody td.num.negative { color: #dc2626; }
+tbody td.empty { text-align: center; color: #64748b; font-style: italic; padding: 2rem; }
+
+.badge {
+  padding: 0.1rem 0.5rem; border-radius: 999px;
+  font-size: 0.7rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.badge-cleared { background: #dcfce7; color: #15803d; }
+.badge-pending { background: #fef9c3; color: #a16207; }
+.badge-failed  { background: #fee2e2; color: #b91c1c; }
+
+.footer {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 1rem; font-size: 0.85rem; color: #475569;
+}
+.pager button {
+  padding: 0.3rem 0.8rem; border: 1px solid #cbd5e1;
+  background: #f8fafc; border-radius: 6px; cursor: pointer;
+  margin-left: 0.3rem; font-size: 0.9rem;
+}
+.pager button:disabled { opacity: 0.4; cursor: not-allowed; }

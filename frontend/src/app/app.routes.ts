@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './chapters/ch15-auth-guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'ch01-hello' },
@@ -46,14 +47,17 @@ export const routes: Routes = [
   },
   {
     path: 'ch09-http-backend',
+    canActivate: [authGuard],
     loadComponent: () => import('./chapters/ch09-http-backend/ch09-http-backend').then(m => m.Ch09HttpBackend),
   },
   {
     path: 'ch10-rxjs-basics',
+    canActivate: [authGuard],
     loadComponent: () => import('./chapters/ch10-rxjs-basics/ch10-rxjs-basics').then(m => m.Ch10RxjsBasics),
   },
   {
     path: 'ch11-state-signals',
+    canActivate: [authGuard],
     loadComponent: () => import('./chapters/ch11-state-signals/ch11-state-signals').then(m => m.Ch11StateSignals),
   },
   {
@@ -62,6 +66,7 @@ export const routes: Routes = [
   },
   {
     path: 'ch13-data-grid',
+    canActivate: [authGuard],
     loadComponent: () => import('./chapters/ch13-data-grid/ch13-data-grid').then(m => m.Ch13DataGrid),
   },
   {
@@ -71,6 +76,7 @@ export const routes: Routes = [
   {
     path: 'ch15-auth-guards',
     loadComponent: () => import('./chapters/ch15-auth-guards/ch15-auth-guards').then(m => m.Ch15AuthGuards),
+    loadChildren: () => import('./chapters/ch15-auth-guards/ch15.routes').then(m => m.ch15Routes),
   },
   {
     path: 'ch16-performance',

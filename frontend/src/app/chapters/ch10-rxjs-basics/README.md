@@ -4,6 +4,17 @@
 
 ---
 
+## ⚠️ Prerequisites
+
+Reuses `TransactionsService` from Chapter 09, so same requirements:
+
+1. **Backend running** (`npm run dev` in `backend/`).
+2. **Logged in** — this chapter is gated with `authGuard`. Log in via Chapter 15 first.
+
+Without these, the page bounces to the login screen.
+
+---
+
 ## 1. Theory
 
 ### Why RxJS still matters in a signals world
@@ -28,16 +39,19 @@ of(1, 2, 3).subscribe(v => console.log(v));   // emits 1, 2, 3, then completes
 interval(1000).subscribe(n => console.log(n)); // emits 0, 1, 2… forever
 ```
 
-### The 6 operators you need daily
+### The operators you need daily
 
 ```ts
-import { map, filter, debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs';
+import { map, filter, debounceTime, distinctUntilChanged, switchMap, catchError, tap, take, startWith } from 'rxjs';
 
 source$.pipe(
   map(x => x * 2),              // transform each value
   filter(x => x > 10),          // skip some values
   debounceTime(300),            // emit only after 300ms of silence
-  distinctUntilChanged(),       // skip repeats
+  distinctUntilChanged(),       // skip consecutive repeats
+  tap(x => console.log(x)),     // side effect, doesn't change the value
+  startWith(''),                // emit a value immediately before the source starts
+  take(5),                      // take the first 5 values, then complete
   switchMap(x => http.get(x)),  // flatten + CANCEL previous inner observable
   catchError(err => of(null)),  // recover from errors
 );
@@ -45,9 +59,74 @@ source$.pipe(
 
 - **`map`/`filter`** — like array methods but for streams.
 - **`debounceTime(ms)`** — wait for a quiet period before emitting. Classic use: search input.
-- **`distinctUntilChanged`** — don't fire if the value hasn't changed.
-- **`switchMap`** — map to a new observable AND cancel the previous. Classic use: "the user typed something new, cancel the old search request." The one operator that will save you from race conditions.
+- **`distinctUntilChanged`** — don't fire if consecutive values are equal.
+- **`tap`** — run a side effect (log, fire-and-forget) without changing the stream. Great for debugging a pipeline.
+- **`startWith(initial)`** — emit `initial` immediately on subscribe, then continue with the source. Common with `valueChanges` so the current value flows the moment you connect.
+- **`take(n)`** — take first `n` emissions, then complete. Useful for "one-shot" observables or capping an `interval`.
+- **`switchMap`** — map to a new observable AND cancel the previous. Classic use: search. See the full "flattening operators" table below.
 - **`catchError`** — recover from an error. Return another observable (often `of(fallback)`).
+
+### Flattening operators — pick the right one
+
+When your `map` returns an Observable (an HTTP call, a timer, another stream), you need to **flatten** — subscribe to the inner Observable and expose its values on the outer stream. Four operators, each handles overlap differently:
+
+| Operator | What it does with in-flight inner observables | Use case |
+|---|---|---|
+| `switchMap` | **Cancels** the old one when a new value arrives | **Search box** — the old query result is irrelevant |
+| `mergeMap` | Runs **all** in parallel, interleaves results | **Fire-and-forget uploads** — want them all to run |
+| `concatMap` | **Queues** — runs them strictly in order, one at a time | **Save-on-every-edit** — must preserve order |
+| `exhaustMap` | **Ignores** new values while one is in-flight | **Submit button** — prevent double-clicks |
+
+Pick carefully — using `mergeMap` on a search box is the classic bug where out-of-order responses overwrite fresh ones with stale data.
+
+### Subjects — producing your own observables
+
+`HttpClient` and `valueChanges` hand you observables. Sometimes you need to **create** one — a service that exposes "notification" events, a cross-component event bus. That's what `Subject` is for.
+
+```ts
+import { Subject, BehaviorSubject } from 'rxjs';
+
+@Injectable({ providedIn: 'root' })
+export class NotificationService {
+  private readonly _events = new Subject<string>();
+
+  readonly events$ = this._events.asObservable();   // consumers subscribe to this
+
+  notify(msg: string) {
+    this._events.next(msg);   // fires a value to all current subscribers
+  }
+}
+```
+
+Three subject flavors:
+
+| Type | Behavior |
+|---|---|
+| `Subject<T>` | Emit values; late subscribers miss past values. For pure events. |
+| `BehaviorSubject<T>` | Holds a **current value**; late subscribers immediately get the latest. State-like. |
+| `ReplaySubject<T>(n)` | Buffers the last `n` emissions and replays to late subscribers. |
+
+**Modern Angular caveat:** `BehaviorSubject<T>` has largely been **replaced by signals** for state. Use signals for the state, keep `Subject` for genuine event streams (toast notifications, "user logged out" broadcast, inter-component messages).
+
+### `combineLatest` — merge multiple streams into one
+
+When your HTTP call depends on **two** inputs (search text + status filter), `combineLatest` gives you one observable that fires whenever either input changes:
+
+```ts
+import { combineLatest } from 'rxjs';
+
+const stream$ = combineLatest([
+  toObservable(this.search),
+  toObservable(this.status),
+]).pipe(
+  debounceTime(300),
+  switchMap(([q, status]) => this.api.list({ q, status })),
+);
+```
+
+Fires only when **both** have emitted at least once. The emitted value is a tuple of the latest from each source.
+
+**The signals equivalent is `computed(() => [this.search(), this.status()])`** — but `combineLatest` is still what you'll use when the sources are observables (`valueChanges` etc.).
 
 ### Subscriptions — the memory leak trap
 
@@ -131,17 +210,88 @@ RxJS is Angular-specific muscle. Vue/React use targeted libs for each use case; 
 
 ## 5. Exercises
 
-### Exercise 1 — stop the tick at 10
-Add a `take(10)` so the interval signal stops at 10. Verify the number stops incrementing in the UI.
+### Exercise 1 — filter the search pipeline + minimum query length
 
-### Exercise 2 — filter search by minimum length
-Change the search pipeline so the API is only called when the search string length ≥ 2. Hint: `filter(q => q.length >= 2)` before `switchMap`.
+**Theory you need:** *The operators you need daily (`filter`, `tap`)*.
 
-### Exercise 3 — error recovery with catchError
-If the API throws, return a signal of `{ items: [], total: 0 }` instead of null. Use `catchError(() => of({ items: [], total: 0, page: 1, size: 10 }))`.
+The chapter's search pipeline fires on every keystroke. Change it so the API is only called when `q.length >= 2`. Also add a `tap(q => console.log('searching for', q))` so you can watch the pipeline in the console.
 
-### Exercise 4 — stretch — a polling observable
-Use `interval(5000)` combined with `switchMap` to re-fetch the first page of transactions every 5 seconds. Convert to a signal. Verify in the UI that counts update when you add a row via the ch09 page.
+- **Hint:** add both operators **before** `switchMap`:
+  ```ts
+  debounceTime(300),
+  distinctUntilChanged(),
+  filter(q => q.length >= 2),
+  tap(q => console.log('searching for', q)),
+  switchMap(q => ...)
+  ```
+- **What good looks like:** type one char → no API call, no log. Type a second → both happen. Open the Network tab to confirm.
+- **Try also:** swap `filter` with `takeWhile(q => q.length >= 2)` and watch the stream **complete** after the first short value — not what you want. Confirms the "filter vs takeWhile" difference.
+
+### Exercise 2 — combine two inputs with `combineLatest`
+
+**Theory you need:** *`combineLatest`*, *Signal ↔ Observable interop*.
+
+Add a status `<select>` next to the search input (`all` / `pending` / `cleared` / `failed`). Build a pipeline that **re-runs the API call whenever either input changes** — the search text OR the status.
+
+- **Hint:** two signals (`search`, `status`), then:
+  ```ts
+  readonly results = toSignal(
+    combineLatest([toObservable(this.search), toObservable(this.status)]).pipe(
+      debounceTime(300),
+      switchMap(([q, status]) =>
+        this.api.list({ page: 1, size: 10, account: q, status: status === 'all' ? undefined : status })
+      ),
+    ),
+    { initialValue: null }
+  );
+  ```
+- **What good looks like:** changing EITHER the search or the dropdown re-fetches. Watch the Network tab to confirm you're not making two overlapping requests on a single change.
+- **Why this matters at the DB job:** every filter panel in the DB app will be a `combineLatest` of 3–6 inputs feeding one query. This is **the** real-world RxJS pattern.
+
+### Exercise 3 — `NotificationService` with a `Subject`
+
+**Theory you need:** *Subjects*, *Signal ↔ Observable interop*.
+
+Create a service `notification.service.ts` that exposes a `Subject<string>` for toast-style messages. Any component can call `notify('something happened')` and anyone subscribing to `events$` receives it.
+
+Then in `ch10-rxjs-basics.ts`, subscribe (with `takeUntilDestroyed`) and display the latest message in a `<p>` above the search.
+
+- **Hint:** service:
+  ```ts
+  @Injectable({ providedIn: 'root' })
+  export class NotificationService {
+    private readonly _events = new Subject<string>();
+    readonly events$ = this._events.asObservable();
+    notify(msg: string) { this._events.next(msg); }
+  }
+  ```
+  Component:
+  ```ts
+  readonly lastMessage = toSignal(this.notifications.events$, { initialValue: '' });
+  ```
+  Add a button that calls `this.notifications.notify('hello at ' + new Date().toISOString())`.
+- **What good looks like:** click the button → message appears above the search. Click again → it updates. This proves the Subject-based event bus works.
+- **Why `Subject` and not a signal:** signals represent **state** (a current value). A notification is an **event** (something that happened once). If you used a signal, every subscriber would see the current message forever — including late subscribers that mounted after the event fired. `Subject` fires once and moves on, which is what you want for events.
+
+### Exercise 4 — stretch — poll the API every 5 seconds
+
+**Theory you need:** *The operators (`switchMap`, `startWith`)*, *`toSignal`*.
+
+Build a polling observable that re-fetches page 1 of transactions every 5 seconds and exposes the count as a signal. Add `startWith(0)` so the first fetch happens immediately, not after a 5-second wait.
+
+- **Hint:**
+  ```ts
+  readonly pollCount = toSignal(
+    interval(5000).pipe(
+      startWith(0),
+      switchMap(() => this.api.list({ page: 1, size: 10 })),
+      map(res => res.total),
+    ),
+    { initialValue: 0 }
+  );
+  ```
+- **What good looks like:** open two browser tabs on the chapter 09 page and the chapter 10 page. Add a row in chapter 09 → within 5s the counter in chapter 10 ticks up.
+- **Watch for:** every component instance with this pipeline fires its own poll. For app-wide live data, build it in a **service** and expose the signal — one poll serves everyone.
 
 ---
 
@@ -152,3 +302,9 @@ Use `interval(5000)` combined with `switchMap` to re-fetch the first page of tra
 - **Called `.subscribe()` inside a `computed`.** Breaks reactivity and leaks. If a value comes from an observable and you want it in a signal, use `toSignal`.
 - **Not typing the pipeline.** `source$.pipe(map(x => ...))` loses types if `source$` isn't typed. Always type the source observable.
 - **Nesting `.subscribe()` inside `.subscribe()`.** Pyramid of doom. Use `switchMap` or `concatMap` to chain.
+- **Subscribing to the same cold observable twice.** `http.get(url)` is **cold** — each `.subscribe()` fires a new request. Two subscribers = two requests. Use `shareReplay(1)` (or a signal) if you need one request with multiple consumers.
+- **`combineLatest` that never fires.** Each source must emit **at least once** before `combineLatest` emits. If one is a `Subject` with no initial value, the whole thing stays silent. Prepend `startWith(initial)` or use `BehaviorSubject`.
+- **`BehaviorSubject` for pure events.** Late subscribers get the last-emitted value, which for a one-off event ("saved successfully") means delayed subscribers see stale "success." Use `Subject` (no replay) for events, `BehaviorSubject` only for state.
+- **Using signals when you should use RxJS.** Debounce, throttle, polling, request cancellation — these are time-based and stream-shaped. Trying to build them with `effect` and timers gets ugly fast. Signals for state; RxJS for pipelines.
+- **Mixing `takeUntilDestroyed()` and manual `takeUntil(subject)`.** Pick one per subscription. Mixing both makes cleanup non-obvious.
+- **Reading `signal()` inside an observable pipeline.** Inside a `pipe(map(...))` callback, calling `this.mySignal()` doesn't subscribe to it — you just read whatever value it has at that instant. Convert the signal to an observable with `toObservable` and bring it into the pipeline properly.

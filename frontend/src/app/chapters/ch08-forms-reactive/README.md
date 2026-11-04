@@ -133,7 +133,132 @@ readonly nameValue = toSignal(this.form.controls.name.valueChanges, { initialVal
 ```ts
 this.form.patchValue({ name: 'Alice' });        // partial — leaves other fields alone
 this.form.setValue({ name: '', email: '', ... }); // must match the full shape
-this.form.reset();                                // all back to initial
+this.form.reset();                                // all back to the default — see gotcha below
+```
+
+**`.reset()` gotcha:** it clears to the control's **initial default** (`''` for strings, `null` otherwise), not your "sensible initial state." If you want to go back to specific values, pass them:
+
+```ts
+this.form.reset({ name: 'Alice', email: '' });
+```
+
+Also resets `touched` and `dirty` flags — same behavior as template-driven `NgForm.resetForm()`.
+
+### Enabling / disabling controls programmatically
+
+```ts
+this.form.controls.payment.disable();   // removes from .value, skips validators
+this.form.controls.payment.enable();    // back to normal
+```
+
+Common pattern: disable a field conditionally based on another field.
+
+```ts
+constructor() {
+  this.form.controls.hasAddress.valueChanges.subscribe(has => {
+    const addr = this.form.controls.address;
+    has ? addr.enable() : addr.disable();
+  });
+}
+```
+
+Disabled controls are **excluded from `.value`** — use `.getRawValue()` if you need them in the submit payload.
+
+### Marking state programmatically
+
+Three commonly-used methods:
+
+```ts
+this.form.markAsTouched();              // one control (or the whole group)
+this.form.markAllAsTouched();           // touches EVERY control recursively
+this.form.markAsDirty();                // flag "value was changed"
+this.form.markAsPristine();             // reset dirty
+```
+
+**Classic use case:** on submit, if the form is invalid, the user hasn't necessarily touched every field — so errors don't show. Fix:
+
+```ts
+submit() {
+  if (this.form.invalid) {
+    this.form.markAllAsTouched();   // ← surfaces all validation errors at once
+    return;
+  }
+  this.api.save(this.form.getRawValue());
+}
+```
+
+### `updateOn` — when the model and validators run
+
+Same option as template-driven forms, declared per control or per group:
+
+```ts
+this.fb.control('', { validators: [Validators.email], updateOn: 'blur' });
+```
+
+Useful for:
+- **Expensive validators** (async username check) — avoid firing on every keystroke.
+- **Noisy UX** — don't show "invalid email" while the user is still typing.
+
+Options: `'change'` (default), `'blur'`, `'submit'`. Set once; can't change at runtime.
+
+### Async validators
+
+A validator can return a `Promise<ValidationErrors | null>` or `Observable<ValidationErrors | null>`. Angular sets `control.pending = true` while it's resolving, then applies the result.
+
+```ts
+import { AbstractControl, AsyncValidatorFn } from '@angular/forms';
+import { map, of, timer, switchMap } from 'rxjs';
+
+function uniqueUsername(api: UserApi): AsyncValidatorFn {
+  return (ctrl: AbstractControl) => {
+    const value = ctrl.value as string;
+    if (!value) return of(null);
+    return timer(400).pipe(                      // debounce so we don't hit API per keystroke
+      switchMap(() => api.exists(value)),
+      map(exists => exists ? { taken: true } : null),
+    );
+  };
+}
+```
+
+Attach as the **third** argument to a control (sync validators second, async third):
+
+```ts
+this.fb.control('', [Validators.required], [uniqueUsername(this.api)]);
+```
+
+Or in a group config: `{ asyncValidators: [...] }`.
+
+Show pending state in the template with `control.pending`:
+
+```html
+@if (ctrl.pending) { <small>checking…</small> }
+@if (ctrl.errors?.['taken']) { <small class="err">that username is taken</small> }
+```
+
+### Reading errors in templates — the shape
+
+`control.errors` is an object keyed by validator name. Each built-in validator has a known key:
+
+| Validator | Key in `errors` | Payload |
+|---|---|---|
+| `required` | `required` | `true` |
+| `minlength` | `minlength` | `{ requiredLength, actualLength }` |
+| `maxlength` | `maxlength` | `{ requiredLength, actualLength }` |
+| `min` | `min` | `{ min, actual }` |
+| `max` | `max` | `{ max, actual }` |
+| `pattern` | `pattern` | `{ requiredPattern, actualValue }` |
+| `email` | `email` | `true` |
+| custom | whatever your fn returns | whatever payload |
+
+Use the key to show the right message:
+
+```html
+@if (ctrl.touched && ctrl.errors; as errs) {
+  @if (errs['required'])  { <small class="err">Required.</small> }
+  @if (errs['minlength']) { <small class="err">Min {{ errs['minlength'].requiredLength }} chars.</small> }
+  @if (errs['taken'])     { <small class="err">Already taken.</small> }
+}
 ```
 
 ---
@@ -179,17 +304,52 @@ Reactive forms are Angular's strongest built-in system. The equivalents in Vue/R
 
 ## 5. Exercises
 
-### Exercise 1 — add an age field with min/max
-Add `age: [18, [Validators.min(18), Validators.max(120)]]`. Show the "must be 18+" error when below.
+### Exercise 1 — nested group for address + `markAllAsTouched` on submit
 
-### Exercise 2 — custom async-looking validator
-Write `usernameUnique(takenNames: string[])` as a factory returning a validator. Attach to a new `username` control. Preseed with `['alice', 'bob']`.
+**Theory you need:** *Binding to the template (nested group)*, *Marking state programmatically*.
 
-### Exercise 3 — a nested group for address
-Add a `address` FormGroup with `street`, `city`, `zip`. Bind with `formGroupName="address"`. Make `zip` match `^\d{5}$`.
+Add an `address` nested FormGroup with `street` (required), `city` (required), `zip` (required + `Validators.pattern(/^\d{5}$/)`). In the submit handler, if the form is invalid, call `markAllAsTouched()` so all errors surface at once.
 
-### Exercise 4 — stretch — subscribe to `valueChanges` with debounce
-Log the current form value to console whenever it changes, debounced by 300ms. Use RxJS: `this.form.valueChanges.pipe(debounceTime(300)).subscribe(...)`.
+- **Hint:** group config: `address: this.fb.group({ street: ['', Validators.required], city: ['', Validators.required], zip: ['', [Validators.required, Validators.pattern(/^\d{5}$/)]] })`. Template: `<fieldset formGroupName="address">`.
+- **What good looks like:** click Submit without typing anything → every field shows its error, including inside the nested group. Fill all required fields correctly → submit succeeds.
+
+### Exercise 2 — conditionally disable a field
+
+**Theory you need:** *Enabling / disabling controls programmatically*, *Reactivity (`valueChanges`)*.
+
+Add a checkbox control `subscribe` and a text control `emailList`. When `subscribe` is `false`, `emailList` must be **disabled** (grayed out, excluded from `.value`). When it's `true`, enable it and require it.
+
+- **Hint:** subscribe to `this.form.controls.subscribe.valueChanges` in the constructor; toggle `this.form.controls.emailList.enable()` / `.disable()` accordingly.
+- **What good looks like:** check the box → text input becomes editable, required. Uncheck → disabled, not required. Submit while subscribe is unchecked → `form.value` doesn't include `emailList`; `form.getRawValue()` does.
+- **Why this matters at the DB job:** you'll build this exact pattern for dependent filters (enable date range only when "custom date" is picked, enable account dropdown only when "specific account" is selected, etc.).
+
+### Exercise 3 — real async validator on `username`
+
+**Theory you need:** *Async validators*, *Reading errors in templates*.
+
+Add a `username` control that asynchronously checks against a fake "taken" list `['alice', 'bob']`. Use a 400ms debounce so it doesn't fire per keystroke. Show "checking…" while pending and "already taken" when it fails.
+
+- **Hint:** write `uniqueUsername()` as `AsyncValidatorFn`:
+  ```ts
+  function uniqueUsername(): AsyncValidatorFn {
+    return (ctrl) => timer(400).pipe(
+      map(() => ['alice', 'bob'].includes(ctrl.value) ? { taken: true } : null)
+    );
+  }
+  ```
+  Attach as the **third** arg: `this.fb.control('', [Validators.required], [uniqueUsername()])`.
+- **What good looks like:** type `alice` → "checking…" shows briefly → "already taken" appears. Type `catalin` → "checking…" → disappears, control becomes valid.
+- **Bonus:** add `updateOn: 'blur'` so the validator doesn't fire mid-typing at all.
+
+### Exercise 4 — stretch — live preview of the form via `valueChanges` → signal
+
+**Theory you need:** *Reactivity (`valueChanges` + `toSignal`)*.
+
+Pipe `this.form.valueChanges` through `debounceTime(300)` and convert to a signal. Render a live preview card beside the form that shows the user-facing summary (e.g., "Alice — alice@db.com — 1 tag"). Previews update 300ms after the user stops typing.
+
+- **Hint:** `readonly live = toSignal(this.form.valueChanges.pipe(debounceTime(300)), { initialValue: this.form.getRawValue() })`. Then read `live()` in the template.
+- **What good looks like:** type into the form → the preview card updates 300ms after you stop. No preview update while actively typing.
+- **Why this teaches signal/RxJS interop:** `valueChanges` is RxJS, templates love signals — `toSignal` is the glue. You'll do this for any filter panel, any "search as you type", any live-validation UI.
 
 ---
 
@@ -199,5 +359,10 @@ Log the current form value to console whenever it changes, debounced by 300ms. U
 - **Using `FormBuilder` instead of `NonNullableFormBuilder`.** You get `string | null` everywhere, which forces `?? ''` all over your code.
 - **`formControlName` without `[formGroup]` on a parent form tag.** Error about the control not being found.
 - **Reading `this.form.value` when controls are disabled.** Disabled controls are missing from `.value`. Use `.getRawValue()`.
-- **Mutating a form after setup from a different context without `markAsTouched`.** Changes won't show errors until user interacts. Call `.markAllAsTouched()` on submit if invalid.
-- **Treating the form object as a signal.** It's not. Use `valueChanges` + `toSignal` if you want signal interop (ch10).
+- **Submit handler that silently accepts invalid forms.** No `markAllAsTouched` call → user sees nothing when they click submit, form just doesn't save. Always `markAllAsTouched()` + early return on `invalid`.
+- **Treating the form object as a signal.** It's not. Use `valueChanges` + `toSignal` if you want signal interop.
+- **`.reset()` wipes to default, not your initial state.** Pass the initial values: `this.form.reset({ name: 'Alice' })`.
+- **Async validator fires per keystroke.** Without an internal `timer`/`debounce`, your API gets hammered. Build debounce into the validator itself (as in Exercise 3) OR set `updateOn: 'blur'`.
+- **Disabled controls don't emit `valueChanges`.** If you have code watching for changes to drive derived UI, disabling the source kills the signal. Prefer `statusChanges` for "something changed" when disables are in play.
+- **Reading `control.errors` when `touched` is false.** Errors are always computed; the UX rule is not to show them until the user interacts. Always guard: `@if (ctrl.touched && ctrl.errors) { ... }`.
+- **Cross-field validator on a child control instead of the group.** A validator on `confirmPassword` can't see `password`. Attach group-level validators via the second arg to `fb.group({...}, { validators: [myValidator] })`.

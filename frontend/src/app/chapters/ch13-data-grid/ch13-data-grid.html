@@ -1,0 +1,79 @@
+<section class="chapter">
+  <header>
+    <p class="tag">Chapter 13</p>
+    <h1>Data grid</h1>
+    <p class="lede">
+      Server-side pagination, sorting, and filtering — the beating heart of
+      every internal data tool. Built on signals + <code>combineLatest</code>
+      + the ch09 mock backend.
+    </p>
+  </header>
+
+  <div class="card">
+    <div class="controls">
+      <input
+        type="text"
+        [value]="search()"
+        (input)="onSearch($event)"
+        placeholder="Filter by account (exact match)"
+      />
+      <select [value]="status()" (change)="onStatus($event)">
+        <option value="all">All statuses</option>
+        <option value="pending">Pending</option>
+        <option value="cleared">Cleared</option>
+        <option value="failed">Failed</option>
+      </select>
+    </div>
+
+    @if (loading()) {
+      <p class="hint">Loading…</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th (click)="setSort('id')"      [class.active]="sort() === 'id'">
+              ID <span class="arrow">{{ sort() === 'id' ? (dir() === 'asc' ? '▲' : '▼') : '' }}</span>
+            </th>
+            <th (click)="setSort('date')"    [class.active]="sort() === 'date'">
+              Date <span class="arrow">{{ sort() === 'date' ? (dir() === 'asc' ? '▲' : '▼') : '' }}</span>
+            </th>
+            <th (click)="setSort('account')" [class.active]="sort() === 'account'">
+              Account <span class="arrow">{{ sort() === 'account' ? (dir() === 'asc' ? '▲' : '▼') : '' }}</span>
+            </th>
+            <th>Counterparty</th>
+            <th (click)="setSort('amount')"  [class.active]="sort() === 'amount'" class="num">
+              Amount <span class="arrow">{{ sort() === 'amount' ? (dir() === 'asc' ? '▲' : '▼') : '' }}</span>
+            </th>
+            <th (click)="setSort('status')"  [class.active]="sort() === 'status'">
+              Status <span class="arrow">{{ sort() === 'status' ? (dir() === 'asc' ? '▲' : '▼') : '' }}</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (tx of items(); track tx.id) {
+            <tr>
+              <td>{{ tx.id }}</td>
+              <td>{{ tx.date | date:'yyyy-MM-dd' }}</td>
+              <td>{{ tx.account }}</td>
+              <td>{{ tx.counterparty }}</td>
+              <td class="num" [class.negative]="tx.amount < 0">
+                {{ tx.amount | number:'1.2-2' }} {{ tx.currency }}
+              </td>
+              <td><span class="badge badge-{{ tx.status }}">{{ tx.status }}</span></td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6" class="empty">No matching rows.</td></tr>
+          }
+        </tbody>
+      </table>
+
+      <div class="footer">
+        <span>Showing page {{ page() }} of {{ totalPages() }} — {{ total() }} total</span>
+        <div class="pager">
+          <button type="button" (click)="prev()" [disabled]="page() === 1">←</button>
+          <button type="button" (click)="next()" [disabled]="page() >= totalPages()">→</button>
+        </div>
+      </div>
+    }
+  </div>
+</section>

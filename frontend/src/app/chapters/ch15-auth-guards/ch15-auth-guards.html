@@ -1,0 +1,59 @@
+<section class="chapter">
+  <header>
+    <p class="tag">Chapter 15</p>
+    <h1>Auth, guards, interceptors</h1>
+    <p class="lede">
+      Real JWT login against the Express+Prisma backend, an auth interceptor
+      that attaches the token to every request, route guards that gate pages
+      by role. The pattern every enterprise Angular app ships with.
+    </p>
+  </header>
+
+  @if (!auth.isLoggedIn()) {
+    <div class="card">
+      <h2>Log in</h2>
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <label>
+          Email
+          <input type="email" formControlName="email" />
+        </label>
+        <label>
+          Password
+          <input type="password" formControlName="password" />
+        </label>
+        <div class="actions">
+          <button type="submit" [disabled]="auth.loading()">
+            {{ auth.loading() ? 'Signing in…' : 'Sign in' }}
+          </button>
+        </div>
+        @if (auth.error(); as e) {
+          <p class="err">{{ e }}</p>
+        }
+      </form>
+
+      <p class="hint">Try one of these seeded users (password = username before the @):</p>
+      <div class="quick">
+        <button type="button" (click)="loginAs('alice@db.com',  'alice')">Alice (admin)</button>
+        <button type="button" (click)="loginAs('bob@db.com',    'bob')">Bob (user)</button>
+        <button type="button" (click)="loginAs('carlos@db.com', 'carlos')">Carlos (user)</button>
+      </div>
+    </div>
+  } @else {
+    <div class="card">
+      <div class="who">
+        <div>
+          <strong>{{ auth.user()?.name }}</strong>
+          <span class="role">{{ auth.user()?.role }}</span>
+        </div>
+        <button type="button" (click)="auth.logout()">Log out</button>
+      </div>
+
+      <nav class="tabs">
+        <a routerLink="./public" routerLinkActive="active">Public (any logged-in user)</a>
+        <a routerLink="./admin"  routerLinkActive="active">Admin only</a>
+      </nav>
+
+      <router-outlet />
+    </div>
+  }
+</section>

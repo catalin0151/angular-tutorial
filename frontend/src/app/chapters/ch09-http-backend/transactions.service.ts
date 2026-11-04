@@ -22,12 +22,14 @@ export interface Page<T> {
 export class TransactionsService {
   private readonly http = inject(HttpClient);
 
-  list(params: { page?: number; size?: number; account?: string; status?: string } = {}) {
+  list(params: { page?: number; size?: number; account?: string; status?: string; sort?: string; dir?: 'asc' | 'desc' } = {}) {
     const search = new URLSearchParams();
     if (params.page)    search.set('page',    String(params.page));
     if (params.size)    search.set('size',    String(params.size));
     if (params.account) search.set('account', params.account);
     if (params.status)  search.set('status',  params.status);
+    if (params.sort)    search.set('sort',    params.sort);
+    if (params.dir)     search.set('dir',     params.dir);
     return this.http.get<Page<Transaction>>(`/api/transactions?${search.toString()}`);
   }
 
