@@ -22,4 +22,8 @@ import { map } from 'rxjs';
 export class AccountDetail {
   private readonly route = inject(ActivatedRoute);
   readonly id = toSignal(this.route.paramMap.pipe(map(p => p.get('id') ?? '')), { initialValue: '' });
+
+  isDirty() {
+    return true;
+  }
 }

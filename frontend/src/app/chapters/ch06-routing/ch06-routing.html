@@ -6,6 +6,10 @@
       Child routes, lazy loading, route params. Navigate with
       <code>[routerLink]</code> or <code>router.navigate()</code>.
     </p>
+    <div>
+      <input [value]="search()" type="text" (input)="onSearch($event)"  placeholder="Search..."/>
+      <button (click)="goToChapterOne()">Go to chapter 2</button>
+    </div>
   </header>
 
   <nav class="tabs">
@@ -17,4 +21,59 @@
   </nav>
 
   <router-outlet />
+
+  <nav class="tabs">
+  <a
+    [routerLink]="[]"
+    [queryParams]="{ tab: 'tab1' }"
+    queryParamsHandling="merge"
+    routerLinkActive="active"
+  >
+    Overview
+  </a>
+
+  <a
+    [routerLink]="[]"
+    [queryParams]="{ tab: 'tab2' }"
+    queryParamsHandling="merge"
+    routerLinkActive="active"
+  >
+    Accounts
+  </a>
+
+  <a
+    [routerLink]="[]"
+    [queryParams]="{ tab: 'tab3' }"
+    queryParamsHandling="merge"
+    routerLinkActive="active"
+  >
+    Settings
+  </a>
+  </nav>
+  <!-- Tab content -->
+<div class="tab-content">
+
+  @switch (activeTab()) {
+    @case ('tab1') {
+      <h2>Overview</h2>
+      <p>This is the overview content.</p>
+    }
+
+    @case ('tab2') {
+      <h2>Accounts</h2>
+      <p>This is the accounts content.</p>
+    }
+
+    @case ('tab3') {
+      <h2>Settings</h2>
+      <p>This is the settings content.</p>
+    }
+
+    @default {
+      <h2>Overview</h2>
+      <p>This is the default content.</p>
+    }
+  }
+
+</div>
 </section>
