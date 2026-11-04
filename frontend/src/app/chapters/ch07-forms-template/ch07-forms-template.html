@@ -10,8 +10,10 @@
   </header>
 
   <form class="card" #f="ngForm" (ngSubmit)="submit()">
+     <input type="password" [(ngModel)]="password" name="password" placeholder="password"/>
     <label>
       Name
+     
       <input
         type="text"
         name="name"

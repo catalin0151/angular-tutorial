@@ -16,6 +16,7 @@ interface Contact {
   styleUrl: './ch07-forms-template.css',
 })
 export class Ch07FormsTemplate {
+  readonly password = signal<string>('');
   readonly form = signal<Contact>({
     name: '',
     email: '',

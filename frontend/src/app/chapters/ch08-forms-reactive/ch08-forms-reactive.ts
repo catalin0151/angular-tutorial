@@ -1,10 +1,10 @@
 import { Component, inject } from '@angular/core';
 import { AbstractControl, FormArray, FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { JsonPipe } from '@angular/common';
-
+import { CatalinForm } from './catalin-forms/catalin-form';
 @Component({
   selector: 'app-ch08-forms-reactive',
-  imports: [ReactiveFormsModule, JsonPipe],
+  imports: [ReactiveFormsModule, JsonPipe, CatalinForm],
   templateUrl: './ch08-forms-reactive.html',
   styleUrl: './ch08-forms-reactive.css',
 })

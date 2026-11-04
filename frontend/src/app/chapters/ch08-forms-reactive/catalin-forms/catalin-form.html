@@ -1,0 +1,24 @@
+<div>
+<form class="card" [formGroup]="form" (ngSubmit)="onSubmit()">
+
+    <label>
+        Email
+        <input type="email" formControlName="email" />
+       @if (form.controls.email.touched && form.controls.email.invalid) {
+            <small class="err">Email error</small>
+        }
+    </label>
+    <label>
+        Password
+        <input type="password" formControlName="password" />
+        @if(form.controls.password.touched && form.controls.password.errors?.['required']) {
+            <small class="err">Empty password</small>
+        }
+    </label>
+    <div>
+        <button type="submit" >
+            Submit
+        </button>
+    </div>
+</form>
+</div>
