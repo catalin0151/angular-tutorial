@@ -1,0 +1,14 @@
+
+<section class="chapter">
+<div>
+    Works http backend
+</div>
+@if(!errors()) {
+    <div>No errors</div>
+} @else {
+    <div>Errors: {{errors()}}</div>
+}
+<div>
+    Data is {{transactionsAsString()}}
+</div>
+</section>

@@ -165,6 +165,282 @@ readonly results = toSignal(
 - Use observables for pipelines (debounce, HTTP, event streams).
 - Bridge with `toSignal` / `toObservable` where they meet.
 
+### Recipe: search-as-you-type with a signal input + debounce + HTTP
+
+This is the canonical "why RxJS still matters" pattern. The user types in a text box, you want to call the API — but **not** on every keystroke, and **not** with out-of-order results. Five operators do the whole job.
+
+**The flow you're building:**
+
+```
+user types → input event → signal.set(value) → toObservable → debounce 300ms
+  → skip repeats → cancel previous request → HTTP call → toSignal → template
+```
+
+**Full component:**
+
+```ts
+import { Component, inject, signal } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { debounceTime, distinctUntilChanged, switchMap, catchError, of } from 'rxjs';
+import { TransactionsService } from '../ch09-http-backend/transactions.service';
+
+@Component({
+  selector: 'app-search-demo',
+  template: `
+    <input
+      type="text"
+      [value]="query()"
+      (input)="query.set($any($event.target).value)"
+      placeholder="search account…"
+    />
+
+    @if (results(); as res) {
+      <p>{{ res.total }} matches</p>
+      <ul>
+        @for (tx of res.items; track tx.id) {
+          <li>{{ tx.account }} — {{ tx.amount }}</li>
+        }
+      </ul>
+    } @else {
+      <p>Start typing to search…</p>
+    }
+  `,
+})
+export class SearchDemo {
+  private readonly api = inject(TransactionsService);
+
+  readonly query = signal('');
+
+  readonly results = toSignal(
+    toObservable(this.query).pipe(
+      debounceTime(300),                                         // 1
+      distinctUntilChanged(),                                    // 2
+      switchMap(q =>                                             // 3
+        q.trim().length < 2
+          ? of(null)                                             // 4
+          : this.api.list({ search: q, page: 1, size: 10 }).pipe(
+              catchError(() => of(null))                         // 5
+            )
+      ),
+    ),
+    { initialValue: null }
+  );
+}
+```
+
+**Line by line:**
+
+1. **`debounceTime(300)`** — wait 300ms of silence before emitting. If the user types `a-b-c` fast, only one emission fires (with `'abc'`), not three. This is where you kill the keystroke spam.
+2. **`distinctUntilChanged()`** — if the latest value equals the previous (user typed, deleted, re-typed the same thing), skip. Prevents redundant requests.
+3. **`switchMap(q => ...)`** — for each new query, start a new HTTP observable AND **cancel the previous one** if it's still in flight. This is what prevents out-of-order responses: user types `a` → request fires → user types `ab` before the first comes back → the `a` request is cancelled, you only ever see the `ab` response.
+4. **Short-circuit for tiny queries** — returning `of(null)` means "emit `null` immediately, don't call the API." Requiring 2+ chars avoids firing on every single keystroke when the user has just started.
+5. **`catchError(() => of(null))` INSIDE the switchMap** — a failed request becomes `null` instead of killing the outer stream. If it were outside, one error would terminate the whole pipeline and the search box would stop working. **Placement matters a lot here.**
+
+**What the user sees:**
+- Type `a` → nothing happens (short-circuited).
+- Type `ab` → 300ms later, one request fires.
+- Keep typing `abc` → the `ab` request gets cancelled mid-flight, a fresh `abc` one fires.
+- Stop typing → 300ms later, results appear.
+- Delete everything → `distinctUntilChanged` skips the repeat if you were already on `''`; results clear via the short-circuit's `null`.
+
+**Variations you'll do in real projects:**
+
+- **Multiple inputs** → wrap each in `toObservable` and `combineLatest` them (see Chapter 13's data grid — search + status + sort + page all funnel into one pipeline).
+- **Show "loading…"** → add a sibling `loading` signal; set it `true` inside `tap` right before the API call, `false` in a second `tap` on success:
+  ```ts
+  switchMap(q => {
+    this.loading.set(true);
+    return this.api.list({ search: q }).pipe(
+      tap({ next: () => this.loading.set(false), error: () => this.loading.set(false) }),
+      catchError(() => of(null)),
+    );
+  })
+  ```
+- **Preserve old results while loading** → don't return `of(null)` on error; return `of(previousResults)` so the UI doesn't flash to empty. More code; often worth it.
+- **With a reactive form** → replace `signal` + `(input)` with `FormControl` + `this.control.valueChanges` (no `toObservable` needed; `valueChanges` IS an observable). Common in ch08-style forms.
+
+**Why `signal + toObservable` instead of raw RxJS Subjects:**
+
+The signal is the **source of truth** — your template binds to it directly, your handlers `.set()` it, and you can read it synchronously anywhere with `.query()`. You bridge to observables **only for the pipeline part**, then come back to a signal for display. One mental model (signals) everywhere except the stream-shaped middle.
+
+### When to convert — signal ↔ FormControl ↔ Observable
+
+Real components mix all three: signals for UI state, FormControls for form inputs, Observables for HTTP. The question "when do I convert one to the other?" has a surprisingly clean answer once you know the rules.
+
+#### The three sources you'll meet
+
+| Source | What it already is | Current value | Emits on subscribe/read |
+|---|---|---|---|
+| **Signal** (`signal()`, `input()`, `computed()`) | Signal | Yes (always) | Yes, synchronously |
+| **FormControl / FormGroup** | Object with `.value` + `valueChanges` Observable | Yes (via `.value`) | No — `valueChanges` only fires on change |
+| **HTTP / Router / event streams** | Observable | No (just a stream) | Depends on the observable |
+
+#### The core rules
+
+1. **Pipelines must be built from Observables.** `combineLatest`, `switchMap`, `debounceTime`, `catchError` — all RxJS operators consume Observables, not signals. **If you want to pipe through operators, you must have an Observable at that stage.**
+2. **Templates and consumers want Signals.** Templates read signals naturally (`{{ foo() }}`). Other signals and `computed`s subscribe to them automatically. **Pipeline output should almost always be a signal**, obtained via `toSignal`.
+3. **The FormControl is already a source of truth.** It has both `.value` (synchronous) and `.valueChanges` (Observable). Don't duplicate it into a signal unless something *else* needs to read it reactively.
+
+#### Decision flow
+
+For each component, ask in order:
+
+1. **What are my sources?** (signals, FormControls, HTTP calls, router params)
+2. **What does the pipeline need to do?** If it needs multiple sources, debounce, cancellation, or combining — you need an RxJS pipeline.
+3. **What does the output feed?** If it's a template or a computed — convert the end to a signal.
+4. **For each source, how do I get it into Observable form?**
+   - Signal → `toObservable(sig)` (emits current value on subscribe)
+   - FormControl → use `.valueChanges` directly (needs `startWith(ctrl.value)` for `combineLatest`)
+   - Already an Observable → use as-is
+
+#### Common patterns, side by side
+
+**Pattern A — Pure signals, no pipeline needed:**
+```ts
+readonly a = signal(1);
+readonly b = signal(2);
+readonly sum = computed(() => this.a() + this.b());
+```
+No conversion. `computed` combines signals automatically. Use when you just need derived values with no I/O or time-based logic.
+
+**Pattern B — Signal driving HTTP with request cancellation:**
+```ts
+readonly userId = signal(1);
+readonly user = toSignal(
+  toObservable(this.userId).pipe(switchMap(id => this.api.get(id))),
+  { initialValue: null }
+);
+```
+Convert signal → observable to use `switchMap`, then back to signal for the template.
+
+**Pattern C — FormControl driving HTTP with debounce:**
+```ts
+readonly form = new FormGroup({ search: new FormControl('', { nonNullable: true }) });
+
+readonly results = toSignal(
+  this.form.controls.search.valueChanges.pipe(
+    startWith(this.form.controls.search.value),
+    debounceTime(300),
+    switchMap(q => this.api.list({ search: q })),
+  ),
+  { initialValue: null }
+);
+```
+FormControl stays as-is — its `valueChanges` is already an Observable. Don't convert the control to a signal unless you need to read `search()` elsewhere. One less link in the chain.
+
+**Pattern D — FormControl + signal combined (ch13 data-grid pattern):**
+```ts
+readonly form = new FormGroup({ search: new FormControl('', { nonNullable: true }) });
+readonly page = signal(1);
+
+readonly results = toSignal(
+  combineLatest([
+    this.form.controls.search.valueChanges.pipe(
+      startWith(this.form.controls.search.value),
+      debounceTime(300),
+    ),
+    toObservable(this.page),
+  ]).pipe(
+    switchMap(([search, page]) => this.api.list({ search, page })),
+  ),
+  { initialValue: null }
+);
+```
+Both sources converted to Observable form (FormControl via `valueChanges`, signal via `toObservable`). Combined with `combineLatest`. Output back to signal via `toSignal`.
+
+**Pattern E — one-shot read, no pipeline:**
+```ts
+save() {
+  const current = this.form.controls.search.value;   // or this.somesignal()
+  this.api.save(current).subscribe(...);
+}
+```
+No conversion needed. Read the source synchronously inside the handler.
+
+#### When to ALSO expose a form field as a signal
+
+```ts
+readonly search = toSignal(
+  this.form.controls.search.valueChanges,
+  { initialValue: this.form.controls.search.value }
+);
+```
+
+**Only add this if** something else wants to read `search()` as a signal:
+- Template reads `{{ search() }}` elsewhere
+- A `computed()` depends on it
+- Another `effect()` wants to react to it
+
+If the only consumer is the pipeline, skip it — use `valueChanges` directly.
+
+#### Anti-patterns to avoid
+
+**1. Mirror signal that duplicates FormControl state:**
+```ts
+// ❌ Two sources of truth
+readonly form = new FormGroup({ search: new FormControl('') });
+readonly search = signal('');
+
+onSearchChange(v) {
+  this.form.controls.search.setValue(v);
+  this.search.set(v);               // easy to forget, now they disagree
+}
+
+// ✅ One source, derive the other
+readonly form = new FormGroup({ search: new FormControl('') });
+readonly search = toSignal(this.form.controls.search.valueChanges, { initialValue: '' });
+```
+
+**2. Round-trip signal → observable → signal with no middle use:**
+```ts
+// ❌ Needless indirection
+readonly search = toSignal(this.form.controls.search.valueChanges, { initialValue: '' });
+toObservable(this.search).pipe(debounceTime(300), switchMap(...))
+
+// ✅ Use valueChanges directly if the signal has no other consumer
+this.form.controls.search.valueChanges.pipe(
+  startWith(this.form.controls.search.value),
+  debounceTime(300),
+  switchMap(...)
+)
+```
+
+**3. Converting for one-shot reads:**
+```ts
+// ❌ Overkill — you're just reading once in a handler
+readonly search = toSignal(this.form.controls.search.valueChanges, { initialValue: '' });
+submit() { this.api.save(this.search()).subscribe(...); }
+
+// ✅ Just read the FormControl directly
+submit() { this.api.save(this.form.controls.search.value).subscribe(...); }
+```
+
+**4. Reading a signal inside an RxJS operator callback and expecting tracking:**
+```ts
+// ❌ Signal read inside pipe is NOT tracked
+toObservable(this.a).pipe(
+  map(aVal => aVal + this.b())    // b() is a one-time read, not tracked
+)
+
+// ✅ Bring b into the pipeline
+combineLatest([toObservable(this.a), toObservable(this.b)]).pipe(
+  map(([a, b]) => a + b)
+)
+```
+
+Signal tracking only works inside `computed`, `effect`, and template bindings. Inside RxJS operator callbacks, signal calls are plain reads, not subscriptions.
+
+#### Rule of thumb for your workflow
+
+**Start with the output. What does the template need?** A signal. That tells you the pipeline ends in `toSignal`. Then work backwards: what sources feed it, what each source's native form is, convert only at the boundaries.
+
+**TL;DR:**
+- Templates and consumers want **signals** → `toSignal` at the END of the pipeline.
+- RxJS operators want **observables** → `toObservable` or `valueChanges` at the START of the pipeline.
+- **Don't duplicate state.** FormControl IS state, signal IS state. Don't wrap one in the other unless a consumer needs the other form.
+- **One-shot reads need no conversion.** Call `signal()` or read `ctrl.value` directly.
+- **A `toSignal` bridge is cheap** and sometimes earns its keep by making the value usable in the template or a computed.
+
 ### `firstValueFrom` and `lastValueFrom` — await an observable
 
 ```ts

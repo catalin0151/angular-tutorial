@@ -16,6 +16,68 @@ The route for this chapter is gated with `canActivate: [authGuard]`. Trying to o
 
 ---
 
+## 📌 Important — two ways to call the backend
+
+HttpClient gives you an `Observable`. You consume it in one of **two styles**. Chapter 09 covers the **imperative** style. Chapter 10 covers the **reactive** one. Both are valid; pick based on what the UI needs to do.
+
+### Style A — imperative: `.subscribe({ next, error })`, called manually
+
+```ts
+load() {
+  this.loading.set(true);
+  this.api.list({ page: this.page() }).subscribe({
+    next: res => { this.items.set(res.items); this.loading.set(false); },
+    error: err => { this.error.set(err.message); this.loading.set(false); },
+  });
+}
+
+next() { this.page.update(n => n + 1); this.load(); }   // ← you call load() yourself
+```
+
+**Mental model:** "I decide when to fire the request." Each click → change state → call `load()`. Zero RxJS knowledge needed beyond `.subscribe`. HttpClient observables self-terminate after one response, so you don't even need to unsubscribe.
+
+**Use for:**
+- Button clicks (save, delete, submit, "load more")
+- One-shot initial loads from the constructor
+- Anywhere the trigger is "user did one thing"
+
+### Style B — reactive: pipeline that fires when sources change
+
+```ts
+readonly response = toSignal(
+  toObservable(this.page).pipe(
+    switchMap(p => this.api.list({ page: p, size: this.size }))
+  ),
+  { initialValue: null }
+);
+
+next() { this.page.update(n => n + 1); }   // ← no load() call, pipeline refires automatically
+```
+
+**Mental model:** "I describe a pipeline; Angular runs it whenever a tracked source changes." Covered in Chapter 10 (RxJS) and used heavily in Chapter 13 (Data grid).
+
+**Use for:**
+- Multiple pieces of state driving one request (search + status + sort + page + dir)
+- Search boxes needing debounce / request cancellation
+- Anywhere you'd otherwise have to call `load()` from 5 different places
+
+### Decision rule
+
+| # of triggers for this request | Style |
+|---|---|
+| 1 (user did one thing) | **Imperative — Style A** |
+| 2–5 (multiple state signals) | **Reactive — Style B** (Chapter 10) |
+
+**This chapter's demo uses Style A** — pagination buttons each call `load()` explicitly. That keeps the lesson focused on `HttpClient` itself, not reactivity.
+
+### Error handling works the same in both styles
+
+`.subscribe({ next, error })` — the `error` callback catches **everything**: 4xx, 5xx, network failures, timeouts. No `try/catch` needed. Inspect `err.status` to tell cases apart (see the "Reading errors" subsection below). `err.status === 0` means the browser never got a response at all (server down, CORS block, offline) — treat it differently from a real HTTP status.
+
+`try/catch` only applies if you switch to `await firstValueFrom(obs)`. Don't mix the two.
+
+---
+
 ## 1. Theory
 
 ### Setup — `provideHttpClient`

@@ -1,0 +1,26 @@
+
+<section class="chapter">
+<div>
+    Works http backend
+</div>
+@if(!errors()) {
+    <div>No errors</div>
+} @else {
+    <div>Errors: {{errors()}}</div>
+}
+<div>
+    <div>Page number: {{this.pageNumber()}}</div>
+        <button type="button" (click)="onPrevious()">Previous</button>
+    <button type="button" (click)="onNext()">Next</button>
+
+</div>
+<form  [formGroup]="form">
+    <label>
+        Search by:
+        <input type="text" placeholder="Search account..." formControlName="search"/>
+    </label>
+</form>
+<div>
+    Data is {{transactionsAsString()}}
+</div>
+</section>

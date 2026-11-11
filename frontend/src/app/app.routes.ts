@@ -51,9 +51,19 @@ export const routes: Routes = [
     loadComponent: () => import('./chapters/ch09-http-backend/ch09-http-backend').then(m => m.Ch09HttpBackend),
   },
   {
+    path: 'ch09-http-backend-catalin',
+    canActivate: [authGuard],
+    loadComponent: () => import('./chapters/ch09-http-backend-catalin/ch09-http-backend-catalin').then(m => m.Ch09HttpBackendCatalin),
+  },
+  {
     path: 'ch10-rxjs-basics',
     canActivate: [authGuard],
     loadComponent: () => import('./chapters/ch10-rxjs-basics/ch10-rxjs-basics').then(m => m.Ch10RxjsBasics),
+  },
+  {
+    path: 'ch10-http-backend-rxjs-catalin',
+    canActivate: [authGuard],
+    loadComponent: () => import('./chapters/ch10-http-backend-rxjs-catalin/ch10-http-backend-rxjs-catalin').then(m => m.Ch10HttpBackendRxjsCatalin),
   },
   {
     path: 'ch11-state-signals',
